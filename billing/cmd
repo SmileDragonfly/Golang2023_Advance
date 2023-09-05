@@ -1,0 +1,1 @@
+ ./wsdlgen -o opw_gen.go -pkg opw mPAYvnOnebillWS.wsdl
