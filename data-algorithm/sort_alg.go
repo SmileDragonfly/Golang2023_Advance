@@ -20,7 +20,7 @@ func BubbleSort(inData []int) {
 		fmt.Println("BubbleSort: End: Time = ", elapseTime.Seconds())
 		fmt.Println("BubbleSort: OutData: ", inData)
 	}()
-	fmt.Println("BubbleSort: Data: ", inData)
+	//fmt.Println("BubbleSort: Data: ", inData)
 	for i := 0; i < len(inData); i++ {
 		var isSwapped bool
 		for j := 0; j < len(inData)-1-i; j++ {
@@ -29,7 +29,7 @@ func BubbleSort(inData []int) {
 				isSwapped = true
 			}
 		}
-		fmt.Println("BubbleSort: LastEle: ", inData[len(inData)-1-i])
+		//fmt.Println("BubbleSort: LastEle: ", inData[len(inData)-1-i])
 		if !isSwapped {
 			break
 		}
@@ -45,13 +45,33 @@ func InsertionSort(inData []int) {
 		fmt.Println("InsertionSort: End: Time = ", elapseTime.Seconds())
 		fmt.Println("InsertionSort: OutData: ", inData)
 	}()
-	fmt.Println("InsertionSort: Data: ", inData)
+	//fmt.Println("InsertionSort: Data: ", inData)
 	for i := 0; i < len(inData); i++ {
 		for j := 0; j < i+1; j++ {
 			if inData[i] < inData[j] {
 				SwapElement(inData, i, j)
 			}
 		}
-		fmt.Println("InsertionSort: Sorted Array: ", inData[:i+1])
+		//fmt.Println("InsertionSort: Sorted Array: ", inData[:i+1])
+	}
+}
+
+func SelectionSort(in []int) {
+	fmt.Println("SelectionSort: Begin")
+	startTime := time.Now()
+	defer func() {
+		endTime := time.Now()
+		elapseTime := endTime.Sub(startTime)
+		fmt.Println("SelectionSort: End: Time = ", elapseTime.Seconds())
+		fmt.Println("SelectionSort: OutData: ", in)
+	}()
+	for i := 0; i < len(in); i++ {
+		for j := i + 1; j < len(in); j++ {
+			minIndex := i
+			if in[j] < in[minIndex] {
+				minIndex = j
+			}
+			SwapElement(in, i, minIndex)
+		}
 	}
 }
