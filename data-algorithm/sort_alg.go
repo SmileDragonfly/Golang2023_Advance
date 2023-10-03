@@ -12,13 +12,13 @@ func SwapElement(in []int, i int, j int) {
 }
 
 func BubbleSort(inData []int) {
-	fmt.Println("BubbleSort: Begin")
+	//fmt.Println("BubbleSort: Begin")
 	startTime := time.Now()
 	defer func() {
 		endTime := time.Now()
 		elapseTime := endTime.Sub(startTime)
 		fmt.Println("BubbleSort: End: Time = ", elapseTime.Seconds())
-		fmt.Println("BubbleSort: OutData: ", inData)
+		//fmt.Println("BubbleSort: OutData: ", inData)
 	}()
 	//fmt.Println("BubbleSort: Data: ", inData)
 	for i := 0; i < len(inData); i++ {
@@ -37,13 +37,13 @@ func BubbleSort(inData []int) {
 }
 
 func InsertionSort(inData []int) {
-	fmt.Println("InsertionSort: Begin")
+	//fmt.Println("InsertionSort: Begin")
 	startTime := time.Now()
 	defer func() {
 		endTime := time.Now()
 		elapseTime := endTime.Sub(startTime)
 		fmt.Println("InsertionSort: End: Time = ", elapseTime.Seconds())
-		fmt.Println("InsertionSort: OutData: ", inData)
+		//fmt.Println("InsertionSort: OutData: ", inData)
 	}()
 	//fmt.Println("InsertionSort: Data: ", inData)
 	for i := 0; i < len(inData); i++ {
@@ -57,13 +57,13 @@ func InsertionSort(inData []int) {
 }
 
 func SelectionSort(in []int) {
-	fmt.Println("SelectionSort: Begin")
+	//fmt.Println("SelectionSort: Begin")
 	startTime := time.Now()
 	defer func() {
 		endTime := time.Now()
 		elapseTime := endTime.Sub(startTime)
 		fmt.Println("SelectionSort: End: Time = ", elapseTime.Seconds())
-		fmt.Println("SelectionSort: OutData: ", in)
+		//fmt.Println("SelectionSort: OutData: ", in)
 	}()
 	for i := 0; i < len(in); i++ {
 		for j := i + 1; j < len(in); j++ {
@@ -74,4 +74,44 @@ func SelectionSort(in []int) {
 			SwapElement(in, i, minIndex)
 		}
 	}
+}
+
+func MergerSort(in []int) {
+	//fmt.Println("MergerSort: Begin")
+	startTime := time.Now()
+	defer func() {
+		endTime := time.Now()
+		elapseTime := endTime.Sub(startTime)
+		fmt.Println("MergerSort: End: Time = ", elapseTime.Seconds())
+		//fmt.Println("MergerSort: OutData: ", in)
+	}()
+	in = MergerSortRecursive(in)
+}
+
+func MergerSortRecursive(l []int) []int {
+	if len(l) == 1 {
+		return l
+	}
+	middle := len(l) / 2
+	l1 := l[:middle]
+	l2 := l[middle:]
+	l1 = MergerSortRecursive(l1)
+	l2 = MergerSortRecursive(l2)
+	return MergerList(l1, l2)
+}
+
+func MergerList(l1 []int, l2 []int) []int {
+	ret := make([]int, 0)
+	for len(l1) > 0 && len(l2) > 0 {
+		if l1[0] < l2[0] {
+			ret = append(ret, l1[0])
+			l1 = l1[1:]
+		} else {
+			ret = append(ret, l2[0])
+			l2 = l2[1:]
+		}
+	}
+	ret = append(ret, l1...)
+	ret = append(ret, l2...)
+	return ret
 }
