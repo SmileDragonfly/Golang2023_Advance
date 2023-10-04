@@ -115,3 +115,42 @@ func MergerList(l1 []int, l2 []int) []int {
 	ret = append(ret, l2...)
 	return ret
 }
+
+func QuickSort(l []int) {
+	startTime := time.Now()
+	defer func() {
+		endTime := time.Now()
+		elapseTime := endTime.Sub(startTime)
+		fmt.Println("QuickSort: End: Time = ", elapseTime.Seconds())
+		fmt.Println("QuickSort: OutData: ", l)
+	}()
+	QuickSortRecursive(l)
+}
+
+func QuickSortRecursive(l []int) {
+	if len(l) <= 1 {
+		return
+	}
+	pivot := l[len(l)-1]
+	i := 0
+	j := len(l) - 2
+	for {
+		for l[i] < pivot {
+			i++
+		}
+		for l[j] > pivot && j > 0 {
+			j--
+		}
+		if i >= j {
+			break
+		}
+		if l[i] > l[j] {
+			SwapElement(l, i, j)
+			i++
+			j--
+		}
+	}
+	SwapElement(l, i, len(l)-1)
+	QuickSortRecursive(l[0:i])
+	QuickSortRecursive(l[i:len(l)])
+}

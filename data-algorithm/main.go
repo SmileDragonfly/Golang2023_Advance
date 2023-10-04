@@ -1,7 +1,7 @@
 package main
 
 func main() {
-	indata := RandomArray(100000, 1000000)
+	indata := RandomArray(100, 1000)
 	in1 := make([]int, len(indata))
 	in2 := make([]int, len(indata))
 	in3 := make([]int, len(indata))
@@ -11,5 +11,6 @@ func main() {
 	BubbleSort(in1)
 	InsertionSort(indata)
 	SelectionSort(in2)
-	MergerSort(in3)
+	//MergerSort(in3)
+	QuickSort(in3)
 }
