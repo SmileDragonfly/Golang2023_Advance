@@ -66,13 +66,13 @@ func SelectionSort(in []int) {
 		//fmt.Println("SelectionSort: OutData: ", in)
 	}()
 	for i := 0; i < len(in); i++ {
+		minIndex := i
 		for j := i + 1; j < len(in); j++ {
-			minIndex := i
 			if in[j] < in[minIndex] {
 				minIndex = j
 			}
-			SwapElement(in, i, minIndex)
 		}
+		SwapElement(in, i, minIndex)
 	}
 }
 
@@ -122,7 +122,7 @@ func QuickSort(l []int) {
 		endTime := time.Now()
 		elapseTime := endTime.Sub(startTime)
 		fmt.Println("QuickSort: End: Time = ", elapseTime.Seconds())
-		fmt.Println("QuickSort: OutData: ", l)
+		//fmt.Println("QuickSort: OutData: ", l)
 	}()
 	QuickSortRecursive(l)
 }
@@ -143,14 +143,11 @@ func QuickSortRecursive(l []int) {
 		}
 		if i >= j {
 			break
-		}
-		if l[i] > l[j] {
+		} else {
 			SwapElement(l, i, j)
-			i++
-			j--
 		}
 	}
 	SwapElement(l, i, len(l)-1)
 	QuickSortRecursive(l[0:i])
-	QuickSortRecursive(l[i:len(l)])
+	QuickSortRecursive(l[i+1 : len(l)])
 }
