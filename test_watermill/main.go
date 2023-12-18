@@ -17,20 +17,16 @@ import (
 var ErrRouterIsNotRunning error = errors.New("Router is not running")
 
 type Queue struct {
-	mapRouter map[string]*Router
-	locker    sync.Mutex
-}
-
-type Router struct {
 	router *message.Router
 	pub    message.Publisher
 	sub    message.Subscriber
+	locker sync.Mutex
 }
 
-func (q Queue) AddRouter(name string) error {
+func (q *Queue) AddRouter(name string) error {
 	q.locker.Lock()
 	defer q.locker.Unlock()
-	if q.mapRouter[name] != nil {
+	if q.router != nil {
 		return nil
 	} else {
 		router, err := message.NewRouter(message.RouterConfig{}, watermill.NewStdLogger(false, false))
@@ -38,31 +34,28 @@ func (q Queue) AddRouter(name string) error {
 			return err
 		}
 		pubSub := gochannel.NewGoChannel(gochannel.Config{}, watermill.NewStdLogger(false, false))
-		q.mapRouter[name] = &Router{
-			router: router,
-			pub:    pubSub,
-			sub:    pubSub,
-		}
+		q.router = router
+		q.sub = pubSub
+		q.pub = pubSub
 	}
-	router := q.mapRouter[name]
-	router.router.AddNoPublisherHandler(name, name, router.sub, q.HandlerRequest)
+	q.router.AddNoPublisherHandler(name, name, q.sub, q.HandlerRequest)
 	// Now that all handlers are registered, we're running the Router.
 	// Run is blocking while the router is running.
 	ctx := context.Background()
-	go router.router.Run(ctx)
-	<-router.router.Running()
+	go q.router.Run(ctx)
+	<-q.router.Running()
 	return nil
 }
 
-func (q Queue) SendMessage(name string, msg *message.Message) error {
-	if q.mapRouter[name] == nil {
+func (q *Queue) SendMessage(name string, msg *message.Message) error {
+	if q.router == nil {
 		err := q.AddRouter(name)
 		if err != nil {
 			return err
 		}
 	}
-	if q.mapRouter[name].router.IsRunning() {
-		err := q.mapRouter[name].pub.Publish(name, msg)
+	if q.router.IsRunning() {
+		err := q.pub.Publish(name, msg)
 		if err != nil {
 			return err
 		}
@@ -71,34 +64,46 @@ func (q Queue) SendMessage(name string, msg *message.Message) error {
 	return ErrRouterIsNotRunning
 }
 
-func (q Queue) HandlerRequest(msg *message.Message) error {
+func (q *Queue) HandlerRequest(msg *message.Message) error {
 	fmt.Println(msg)
 	return nil
 }
 
-func (q Queue) HandlerResponse(msg *message.Message) error {
+func (q *Queue) HandlerResponse(msg *message.Message) error {
 	fmt.Println(msg)
 	return nil
 }
 
 func main() {
-	queue := Queue{
-		mapRouter: make(map[string]*Router),
-		locker:    sync.Mutex{},
-	}
-	msg := message.NewMessage(watermill.NewUUID(), []byte("Toi ten la dat"))
-	err := queue.SendMessage("dat_in", msg)
+	pubSub := gochannel.NewGoChannel(gochannel.Config{}, watermill.NewStdLogger(false, false))
+	go func() {
+		for {
+			msgCh, err := pubSub.Subscribe(context.Background(), "datin")
+			if err != nil {
+				panic(err)
+			}
+			msg := <-msgCh
+			fmt.Println(msg)
+		}
+	}()
+	time.Sleep(time.Second)
+	err := pubSub.Publish("datin", &message.Message{
+		UUID:     watermill.NewUUID(),
+		Metadata: nil,
+		Payload:  []byte("Toi ten la dat"),
+	})
 	if err != nil {
 		panic(err)
 	}
-	time.Sleep(10 * time.Second)
-	msg = message.NewMessage(watermill.NewUUID(), []byte("Ban co bi dien khong"))
-	err = queue.SendMessage("dat_in", msg)
+	err = pubSub.Publish("datin", &message.Message{
+		UUID:     watermill.NewUUID(),
+		Metadata: nil,
+		Payload:  []byte("abcd"),
+	})
 	if err != nil {
 		panic(err)
 	}
 	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt, syscall.SIGINT)
+	signal.Notify(signalCh, syscall.SIGINT)
 	<-signalCh
-	fmt.Println("Received Ctrl+C. Stopping the application gracefully.")
 }

@@ -8,14 +8,23 @@ import (
 
 func main() {
 	s := gocron.NewScheduler(time.Local)
-	job, err := s.Every(1).Day().At("22:07;22:09").Do(Jobs)
+	job1, err := s.Every(5).Second().StartAt(time.Now().Add(10 * time.Second)).Do(Jobs1)
 	if err != nil {
 		panic(err)
 	}
-	log.Println(job.IsRunning())
-	s.StartBlocking()
+	log.Println("Start")
+	s.StartAsync()
+	time.Sleep(1 * time.Minute)
+	s.RemoveByReference(job1)
+	_, err = s.Every(3).Second().Do(Jobs2)
+	time.Sleep(1 * time.Minute)
+	log.Println("End")
 }
 
-func Jobs() {
-	log.Println("In job")
+func Jobs1() {
+	log.Println("In job 1")
+}
+
+func Jobs2() {
+	log.Println("In job 2")
 }
