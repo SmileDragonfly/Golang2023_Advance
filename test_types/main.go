@@ -1,6 +1,7 @@
 package main
 
 func main() {
-	CreateRune()
+	//CreateRune()
+	CreateArray()
 	return
 }

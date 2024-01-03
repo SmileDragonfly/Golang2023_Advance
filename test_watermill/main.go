@@ -9,6 +9,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 	"os"
 	"os/signal"
+	"reflect"
 	"sync"
 	"syscall"
 	"time"
@@ -83,7 +84,8 @@ func main() {
 				panic(err)
 			}
 			msg := <-msgCh
-			fmt.Println(msg)
+			fmt.Println(reflect.TypeOf(msg))
+			fmt.Println(string(msg.Payload))
 		}
 	}()
 	time.Sleep(time.Second)
@@ -92,6 +94,7 @@ func main() {
 		Metadata: nil,
 		Payload:  []byte("Toi ten la dat"),
 	})
+	time.Sleep(10 * time.Second)
 	if err != nil {
 		panic(err)
 	}
