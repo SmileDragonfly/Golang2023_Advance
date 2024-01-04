@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"unsafe"
+)
 
 func CreateRune() {
 	sRune := "ab£"
@@ -16,4 +19,17 @@ func CreateArray() {
 	sArray := [4]string{"a", "b"}
 	fmt.Printf("sArray: %s\n", sArray)
 	fmt.Printf("sArray len: %d\n", len(sArray))
+}
+
+func CreateStruct() {
+	type TestStruct struct {
+		s string
+		n int
+	}
+	sStruct := TestStruct{}
+	sStruct.s = "This is a test string in struct"
+	sStruct.n = 100
+	fmt.Printf("sStruct: %+v\n", sStruct)
+	fmt.Printf("Empty struct: %+v\n", unsafe.Sizeof(TestStruct{}))
+	fmt.Printf("Struct size: %d\n", unsafe.Sizeof(sStruct))
 }
