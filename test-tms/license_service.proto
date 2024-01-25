@@ -1,0 +1,45 @@
+syntax = "proto3";
+package com.tmsatmsoftware.server.licensing;
+
+option go_package = "tms.proto.licensing";
+option java_package = "com.tmsatmsoftware.server.licensing";
+option java_multiple_files = true;
+
+message CheckLicenseRequest {
+    string atm_id = 1;
+    string customer_id = 2;
+}
+
+message CheckLicenseResponse {
+    enum LicenseStatus {
+        UNKNOWN = 0;
+        INACTIVE = 1;
+        EXPIRED = 2;
+        VALID = 3;
+        INVALID = 4;
+    }
+    LicenseStatus status = 1;
+}
+
+message LicenseStatusRequest {
+    string atm_id = 1;
+    string customer_id = 2;
+}
+
+message LicenseStatusResponse {
+    enum LicenseStatus {
+        NO_LICENSE = 0;
+        EXPIRED = 1;
+        WARNING = 2;
+        ACTIVE = 3;
+    }
+    LicenseStatus status = 1;
+}
+
+service LicenseService {
+    rpc CheckLicense (CheckLicenseRequest) returns (CheckLicenseResponse) {
+    }
+
+    rpc GetStatus (LicenseStatusRequest) returns (LicenseStatusResponse){
+    }
+}
