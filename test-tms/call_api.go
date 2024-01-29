@@ -2,7 +2,15 @@ package main
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/md5"
+	"crypto/sha1"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"golang.org/x/crypto/pbkdf2"
 	"google.golang.org/grpc"
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
@@ -70,8 +78,10 @@ type dbConfig struct {
 	dbname   string
 }
 
-func CallCheckLicenseCustomer(url string, customerId string, dbConf dbConfig) error {
+func CallCheckLicenseCustomer(url string, customerId string, dbConf dbConfig, wgParam *sync.WaitGroup) error {
 	// Get all atmId from db
+	wgParam.Add(1)
+	defer wgParam.Done()
 	conn, err := gorm.Open(sqlserver.Open(fmt.Sprintf("sqlserver://%s:%s@%s:%d?database=%s",
 		dbConf.user, dbConf.password, dbConf.host, dbConf.port, dbConf.dbname)))
 	if err != nil {
@@ -79,9 +89,9 @@ func CallCheckLicenseCustomer(url string, customerId string, dbConf dbConfig) er
 		return err
 	}
 	var atmIds []string
-	conn.Table("tblLicenseAtm").Select("AtmId").Where("LicenseId = ?", "73A490B5-5E5F-4496-9162-C38E5C3C21BA").Find(&atmIds)
-	log.Println(fmt.Sprintf("Total atmIds: %d", len(atmIds)))
-	log.Println(fmt.Sprintf("List atmIds: %+v", atmIds))
+	conn.Table("tblLicenseAtm").Select("AtmId").Find(&atmIds)
+	log.Println(fmt.Sprintf("[%s]Total atmIds: %d", customerId, len(atmIds)))
+	log.Println(fmt.Sprintf("[%s]List atmIds: %+v", customerId, atmIds))
 	grpcConn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		log.Println(fmt.Sprintf("[%s]Error: %v", customerId, err))
@@ -89,21 +99,86 @@ func CallCheckLicenseCustomer(url string, customerId string, dbConf dbConfig) er
 	}
 	// Call grpc
 	var wg sync.WaitGroup
-	loop := 1
-	countAtm := 0
-	for i := 0; i < loop; i++ {
-		for _, atmId := range atmIds {
-			go func(customer string, atm string) {
-				wg.Add(1)
-				CallCheckLicense(grpcConn, customer, atm)
-				wg.Done()
-			}(customerId, atmId)
-			countAtm++
-			if countAtm > 600 {
-				break
-			}
-		}
+	for _, atmId := range atmIds {
+		go func(customer string, atm string) {
+			wg.Add(1)
+			CallCheckLicense(grpcConn, customer, atm)
+			wg.Done()
+		}(customerId, atmId)
 	}
 	wg.Wait()
 	return nil
+}
+
+type CustomerInfo struct {
+	Id          string      `json:"id"`
+	Code        string      `json:"code"`
+	Name        string      `json:"name"`
+	DbServer    string      `json:"dbServer"`
+	DbName      string      `json:"dbName"`
+	DbPort      int         `json:"dbPort"`
+	DbUser      string      `json:"dbUser"`
+	DbPassword  string      `json:"dbPassword"`
+	Transaction bool        `json:"transaction"`
+	AtmMgmt     bool        `json:"atmMgmt"`
+	Cash        bool        `json:"cash"`
+	Software    bool        `json:"software"`
+	Security    bool        `json:"security"`
+	CreatedDate time.Time   `json:"createdDate"`
+	IsActive    bool        `json:"isActive"`
+	Roles       interface{} `json:"roles"`
+}
+
+func GetCustomerList(url string) ([]CustomerInfo, error) {
+	body, err := http.Get(url)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer body.Body.Close()
+	var customerList []CustomerInfo
+	err = json.NewDecoder(body.Body).Decode(&customerList)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return customerList, nil
+}
+
+func DecryptAes(encryptedData string) (string, error) {
+	// Decrypt DB user and password
+	key := string([]byte{'4', 'a', 's', 'm', '$', 'm', 'c', 'r', 't', '@', '1', '9', '8', 't', 'q', 'k', '$'})
+	if encryptedData != "" {
+		salt := md5.Sum([]byte(key))
+		keyArray := pbkdf2.Key([]byte(key), salt[:], 1000, 48, sha1.New)
+		iv := keyArray[32:]
+		keyArray = keyArray[:32]
+		rijndael, err := aes.NewCipher(keyArray)
+		if err != nil {
+			return "", err
+		}
+		// Decrypt
+		mode := cipher.NewCBCDecrypter(rijndael, iv)
+		byteData, err := hex.DecodeString(encryptedData)
+		if err != nil {
+			return "", err
+		}
+		plainByte := make([]byte, len(byteData))
+		mode.CryptBlocks(plainByte, byteData)
+		// Unpad plaintext
+		plainByte = unpadPKCS7(plainByte)
+		return string(plainByte), nil
+	}
+	return "", errors.New("Empty encrypted data")
+}
+
+// PKCS7 Unpadding
+func unpadPKCS7(data []byte) []byte {
+	padding := int(data[len(data)-1])
+	return data[:len(data)-padding]
+}
+
+type aesKeys struct {
+	keyBytes []byte
+	ivBytes  []byte
 }
