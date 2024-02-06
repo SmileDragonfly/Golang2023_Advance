@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
+	"log"
 	"sync"
 )
 
 func main() {
-	db, err := gorm.Open(sqlserver.Open("sqlserver://tms:123@123A@192.168.68.31:1433?database=CHUNG_VCB_CUSTOMER"))
+	db, err := gorm.Open(sqlserver.Open("sqlserver://sa:123@123A@192.168.68.242:1433?database=gormdb"))
 	if err != nil {
 		panic(err)
 	}
@@ -21,18 +21,22 @@ func main() {
 	}
 	defer sqlDB.Close()
 	// Insert data
-	var wg sync.WaitGroup
-	for i := 0; i < 8; i++ {
-		go func(wg *sync.WaitGroup) {
-			wg.Add(1)
-			for j := 0; j < 100000; j++ {
-				u := DoCommandHistory{}
-				u.RandomData()
-				db.Create(&u)
-				fmt.Println(u.ID)
-			}
-			wg.Done()
-		}(&wg)
+	for i := 0; i < 20; i++ {
+		var wg sync.WaitGroup
+		for j := 0; j < 20; j++ {
+			go func(wg *sync.WaitGroup) {
+				wg.Add(1)
+				var us []User
+				for k := 0; k < 5000; k++ {
+					u := User{}
+					u.RandomData()
+					us = append(us, u)
+				}
+				db.CreateInBatches(&us, 100)
+				wg.Done()
+			}(&wg)
+		}
+		wg.Wait()
+		log.Println("Done loop", i)
 	}
-	wg.Wait()
 }
