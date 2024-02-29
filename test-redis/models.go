@@ -16,3 +16,17 @@ type APIToken struct {
 func (a APIToken) TableName() string {
 	return "tblAPIToken"
 }
+
+type HubTxnLock struct {
+	Id            string    `gorm:"column:Id;primary_key;type:uniqueidentifier"`
+	TerminalHubId string    `gorm:"column:TerminalHubId;type:uniqueidentifier"`
+	HubTID        string    `gorm:"column:HubTID;type:varchar(50)"`
+	TerminalID    string    `gorm:"column:TerminalID;type:varchar(50)"`
+	CreatedDate   time.Time `gorm:"column:CreatedDate;type:datetime"`
+	ExpiredTime   time.Time `gorm:"column:ExpiredTime;type:datetime"`
+	LockType      int64     `gorm:"column:LockType;type:int"`
+}
+
+func (h HubTxnLock) TableName() string {
+	return "tblHubTxnLock"
+}

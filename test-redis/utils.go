@@ -19,3 +19,17 @@ func LoadTokenFromCache(cache *redis.Client, terminalID string) string {
 	}
 	return token
 }
+
+func LoadLockFromDB(db *gorm.DB, terminalHubID string) string {
+	var lock string
+	db.Model(&HubTxnLock{}).Where("TerminalHubId = ?", terminalHubID).Select("Id").Scan(&lock)
+	return lock
+}
+
+func LoadLockFromCache(cache *redis.Client, terminalHubID string) string {
+	lock, err := cache.Get(context.Background(), terminalHubID).Result()
+	if err != nil {
+		return ""
+	}
+	return lock
+}

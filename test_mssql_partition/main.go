@@ -21,7 +21,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 	// Insert data
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 100; i++ {
 		var wg sync.WaitGroup
 		for j := 0; j < 20; j++ {
 			go func(wg *sync.WaitGroup) {

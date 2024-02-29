@@ -3,6 +3,7 @@ module testredis
 go 1.19
 
 require (
+	github.com/google/uuid v1.3.0
 	github.com/redis/go-redis/v9 v9.2.1
 	gorm.io/driver/sqlserver v1.5.3
 	gorm.io/gorm v1.25.7
